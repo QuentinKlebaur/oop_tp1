@@ -1,5 +1,5 @@
 BUILD_FOLDER = build
-MAIN_FILE = Main
+MAIN_FILE = ApplicationClient
 SRC_FOLDER = src
 
 default:

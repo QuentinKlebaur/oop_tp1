@@ -5,8 +5,7 @@ JC = javac
 		$(JC) $(JFLAGS) $*.java
 
 CLASSES = \
-		Main.java \
-		Server.java
+		ApplicationServeur.java
 
 default: classes
 
