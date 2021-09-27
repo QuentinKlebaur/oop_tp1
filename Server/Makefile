@@ -3,9 +3,9 @@ MAIN_FILE = ApplicationServeur
 SRC_FOLDER = src
 
 PORT = 8080
-INPUT_FOLDER = input/
-CLASS_FOLDER = class/
-OUTPUT_FILE = tmp.txt
+INPUT_FOLDER = ../input/
+CLASS_FOLDER = ../classes/
+OUTPUT_FILE = ../output.txt
 
 default:
 	cd $(SRC_FOLDER) && $(MAKE)

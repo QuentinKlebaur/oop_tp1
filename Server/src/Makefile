@@ -5,7 +5,10 @@ JC = javac
 		$(JC) $(JFLAGS) $*.java
 
 CLASSES = \
-		ApplicationServeur.java
+		ApplicationServeur.java 	\
+		ClientSessionThread.java	\
+		Commande.java				\
+		StopThread.java
 
 default: classes
 

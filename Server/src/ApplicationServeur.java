@@ -1,6 +1,8 @@
 import java.io.*;
 import java.net.*;
 import java.lang.*;
+import java.util.*;
+import java.text.*;
 
 public class ApplicationServeur
 {
@@ -8,13 +10,68 @@ public class ApplicationServeur
     * prend le numéro de port, crée un SocketServer sur le port
     */
     public ApplicationServeur (int port) throws IOException {
-        System.out.println("Hello Server");
         _socket = new ServerSocket(port);
-
-        System.out.println(_socket.getLocalPort());
+        _clients = new LinkedList<Socket>();
+        _running = true;
     }
 
     private ServerSocket _socket;
+    private List<Socket> _clients;
+    private PrintWriter _logger;
+    private File _inputFolder;
+    private File _classesFolder;
+    private boolean _running;
+
+    /**
+    * Permet d'initialiser les fichiers et dossiers avec lesquels le programme va interagir
+    */
+    public void initialize(String inputFolderPath, String classesFolderPath, String outputFilePath) throws IOException {
+        _inputFolder = new File(inputFolderPath);
+        _classesFolder = new File(classesFolderPath);
+        File outputFile = new File(outputFilePath);
+
+        if (!_inputFolder.isDirectory())
+            throw new FileNotFoundException('\"' + inputFolderPath + '\"' + " is not a folder");
+        if (!_classesFolder.isDirectory())
+            throw new FileNotFoundException('\"' + classesFolderPath + '\"' + " is not a folder");
+        if (!outputFile.isFile())
+            throw new FileNotFoundException('\"' + outputFilePath + '\"' + " is not a file");
+        _logger = new PrintWriter(new BufferedWriter(new FileWriter(outputFilePath)));
+        addLog("Server is running on the port [" + Integer.toString(_socket.getLocalPort()) + "]");
+    }
+
+    /**
+    * Arrête le serveur
+    */
+    public void stop() {
+        addLog("Server has been stopped");
+        _running = false;
+    }
+
+    /**
+    * écrit les logs
+    */
+    public void addLog(String message) {
+        String now = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date());
+        String log = "[" + now + "] " + message;
+
+        System.out.println(log);
+    }
+
+    /**
+    * écrit un log en précisant les port du client
+    */
+    public void addLog(Socket socket, String message) {
+        addLog("[" + Integer.toString(socket.getPort()) + "] " + message);
+    }
+
+    /**
+    * écrit les logs d'une commande
+    */
+    public void addLog(Socket socket, Commande command) {
+        addLog(socket, "Command received:");
+        command.dump();
+    }
 
     /**
     * Se met en attente de connexions des clients. Suite aux connexions, elle lit
@@ -22,7 +79,17 @@ public class ApplicationServeur
     * le client, et appellera traiterCommande(Commande uneCommande)
     */
     public void aVosOrdres() {
+        while (_running) {
+            try {
+                Socket client = _socket.accept();
+                _clients.add(client);
+                addLog(client, "New client connected");
 
+                new ClientSessionThread(this, client).start();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -94,7 +161,6 @@ public class ApplicationServeur
     */
     public static void main(String[] args) {
         if (args.length != 4) {
-            System.out.println(args.length);
             System.out.println("Wrong number of arguments");
             return;
         }
@@ -107,8 +173,13 @@ public class ApplicationServeur
             String outputFile = args[3];
             server = new ApplicationServeur(port);
 
+            server.initialize(inputFolder, classesFolder, outputFile);
+
+            Runtime.getRuntime().addShutdownHook(new StopThread(server));
             server.aVosOrdres();
         } catch (NumberFormatException e) {
+            e.printStackTrace();
+        } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
