@@ -1,4 +1,5 @@
 import java.io.*;
+import java.util.Arrays;
 
 class Commande implements java.io.Serializable {
     public Commande(String command) {
@@ -8,14 +9,14 @@ class Commande implements java.io.Serializable {
     private String[] _command = null;
 
     /**
-    * Return the command
+    * Renvoie les éléments de la commande
     */
     public String[] getCommand() {
         return _command;
     }
 
     /**
-    * Display the command
+    * Affiche la commande
     */
     public void dump() {
         String elem = "";
@@ -28,5 +29,23 @@ class Commande implements java.io.Serializable {
             elem += ": " + _command[i];
             System.out.println(elem);
         }
+    }
+
+    /**
+    * Renvoie le nom de la commande
+    */
+    public String getName() {
+        if (_command.length >= 1)
+            return _command[0];
+        return "";
+    }
+
+    /**
+    * Renvoie les arguments de la commande
+    */
+    public String[] getArgs() {
+        if (_command.length >= 2)
+            return Arrays.copyOfRange(_command, 1, _command.length);
+        return new String[0];
     }
 }

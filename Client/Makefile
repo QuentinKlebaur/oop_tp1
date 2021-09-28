@@ -13,7 +13,7 @@ default:
 	mv $(SRC_FOLDER)/*.class $(BUILD_FOLDER)
 
 clean:
-	rm -rf $(BUILD_FOLDER)
+	rm $(BUILD_FOLDER)/*.class
 
 run: classes
 	cd $(BUILD_FOLDER) && java $(MAIN_FILE) $(HOST) $(PORT) $(COMMAND_FOLDER) $(OUTPUT_FILE)

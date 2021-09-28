@@ -21,10 +21,12 @@ class ClientSessionThread extends Thread {
             e.printStackTrace();
             return;
         }
+        _server.addClientResponse();
 
         while (true) {
             try {
                 Commande command = null;
+                String response = "OK";
 
                 try {
                     command = (Commande) inStream.readObject();
@@ -37,12 +39,25 @@ class ClientSessionThread extends Thread {
                 if (command == null) {
                     _socket.close();
                     _server.addLog(_socket, "Client quit");
-                    return;
+                    break;
                 } else {
                     _server.addLog(_socket, command);
-                    // DO something
+                    try {
+                        _server.traiteCommande(command);
+                    } catch (IllegalArgumentException e) {
+                        e.printStackTrace();
+                        response = "KO: wrong arguments";
+                    } catch (ClassNotFoundException e) {
+                        e.printStackTrace();
+                        response = "KO: could not be loaded";
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                        response = "KO: can't access the class, attribute or method";
+                    }
+                    String tmpResponse = _server.popClientResponse();
 
-                    String response = "OK";
+                    if (!tmpResponse.isEmpty())
+                        response = tmpResponse;
                     
                     try {
                         outStream.writeBytes(response + "\n");
@@ -54,8 +69,8 @@ class ClientSessionThread extends Thread {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-                return;
             }
         }
+        _server.removeClientResponse();
     }
 }
