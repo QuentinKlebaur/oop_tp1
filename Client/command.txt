@@ -16,3 +16,10 @@ lecture#ClassString#value
 lecture#ClassString#value2
 ecriture#ClassString#value2#SUPER COOL BONHOMME
 lecture#ClassString#value2
+
+fonction#ClassInt#setValue2#int:3
+lecture#ClassString#value2
+fonction#ClassInt#setValue2#stringg:hihi
+fonction#ClassInt#swag#int:12,float:3.14,String:Yiikes
+fonction#ClassInt#getValue2#
+fonction#ClassInt#dump#tmp.TestInt:ID(ClassInt)

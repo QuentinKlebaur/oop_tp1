@@ -199,27 +199,91 @@ public class ApplicationServeur
     * Gère le passage d'arguments pour la commande écriture
     */
     public void manageEcriture(String[] args) throws IllegalAccessException {
-        if (args.length != 3) {
-            System.out.println("NUMBER OF ARGUMENTS");
+        if (args.length != 3)
             throw new IllegalArgumentException();
-        }
         String identificator = args[0];
         String attribute = args[1];
         Object value = args[2];
         Object object = _instances.get(identificator);
 
-        if (object == null) {
-            System.out.println("OBJECT DOES NOT EXISTS");
+        if (object == null)
             throw new IllegalArgumentException();
-        }
         traiterEcriture(object, attribute, value);
+    }
+
+    public Object toObject(String className, String value) {
+        if (Boolean.class.getName().equals(className) || className.equals("boolean"))
+                return Boolean.parseBoolean(value);
+        if (Byte.class.getName().equals(className) || className.equals("byte"))
+                return Byte.parseByte(value);
+        if (Short.class.getName().equals(className) || className.equals("short"))
+                return Short.parseShort(value);
+        if (Integer.class.getName().equals(className) || className.equals("int"))
+                return Integer.parseInt(value);
+        if (Long.class.getName().equals(className) || className.equals("long"))
+                return Long.parseLong(value);
+        if (Float.class.getName().equals(className) || className.equals("float"))
+                return Float.parseFloat(value);
+        if (Double.class.getName().equals(className) || className.equals("double"))
+                return Double.parseDouble(value);
+        if (String.class.getName().equals(className) || className.equals("String"))
+            return value;
+        throw new IllegalArgumentException();
+    }
+
+    public void parseFunctionArguments(String[] elements, String[] types, Object[] values) {
+        if (elements == null || types == null || values == null ||
+            elements.length != values.length || elements.length != types.length)
+            throw new IllegalArgumentException();
+
+        for (int i = 0; i != elements.length; ++i) {
+            String[] element = elements[i].split(":");
+
+            if (element.length != 2)
+                throw new IllegalArgumentException();
+            String type = element[0];
+            String valueStr = element[1];
+
+            try {
+                values[i] = toObject(type, valueStr);
+            } catch (IllegalArgumentException e) {
+                if (!valueStr.matches("ID\\(.+\\)"))
+                    throw new IllegalArgumentException();
+                Object object = _instances.get(valueStr.replaceAll("ID\\(", "").replaceAll("\\)", ""));
+
+                if (object == null || !object.getClass().getName().equals(type))
+                    throw new IllegalArgumentException();
+                values[i] = object;
+            }
+            types[i] = values[i].getClass().getName();
+        }
+        System.out.println("TYPES: " + types.toString());
+        for (int i = 0; i != types.length; ++i)
+            System.out.println(types[i]);
+        System.out.println("VALUES: " + values.toString());
+        for (int i = 0; i != values.length; ++i)
+            System.out.println(values[i]);
     }
 
     /**
     * Gère le passage d'arguments pour la commande fonction
     */
-    public void manageFonction(String[] args) {
-        System.out.println("FONCTION");
+    public void manageFonction(String[] args) throws IllegalAccessException {
+        if (args.length < 2 || args.length > 3)
+            throw new IllegalArgumentException();
+        Object obj = _instances.get(args[0]);
+        String functionName = args[1];
+        String[] types = null;
+        Object[] values = null;
+
+        if (args.length == 3) {
+            String[] elements = args[2].split(",");
+
+            types = new String[elements.length];
+            values = new Object[elements.length];
+            parseFunctionArguments(elements, types, values);
+        }
+        traiterAppel(obj, functionName, types, values);
     }
 
     /**
@@ -323,7 +387,7 @@ public class ApplicationServeur
         try {
             Class type = searchedField.getType();
 
-            searchedField.set(pointeurObjet, valeur);
+            searchedField.set(pointeurObjet, toObject(type.getName(), valeur.toString()));
         } catch (IllegalAccessException e) {
             searchedMethod = getMethod(pointeurObjet.getClass(), getMethodName);
             if (searchedMethod == null || searchedMethod.getGenericParameterTypes().length != 1)
@@ -331,7 +395,7 @@ public class ApplicationServeur
             try {
                 Class type = Class.forName(searchedMethod.getGenericParameterTypes()[0].getTypeName());
                 
-                searchedMethod.invoke(pointeurObjet, type.cast(valeur));
+                searchedMethod.invoke(pointeurObjet, toObject(type.getName(), valeur.toString()));
             } catch (IllegalAccessException ex) {
                 throw new IllegalAccessException();
             } catch (InvocationTargetException ex) {
@@ -412,9 +476,24 @@ public class ApplicationServeur
     * passé)
     */
     public void traiterAppel(Object pointeurObjet, String nomFonction, String[] types,
-        Object[] valeurs) {
+        Object[] valeurs) throws IllegalAccessException {
+        Method method = getMethod(pointeurObjet.getClass(), nomFonction);
+        String result = null;
 
+        if (method == null)
+            throw new IllegalArgumentException();
+        try {
+            Object objResult = method.invoke(pointeurObjet, valeurs);
+
+            if (objResult != null)
+                result = objResult.toString();
+            else
+                result = "null";
+        } catch (InvocationTargetException e) {
+            throw new IllegalAccessException();
         }
+        updateClientResponse(result);
+    }
 
     /**
     * programme principal. Prend 4 arguments: 1) numéro de port, 2) répertoire source, 3)
