@@ -3,8 +3,8 @@ MAIN_FILE = ApplicationServeur
 SRC_FOLDER = src
 
 PORT = 8080
-INPUT_FOLDER = ../input/
-CLASS_FOLDER = ../classes/
+INPUT_FOLDER = ../test/
+CLASS_FOLDER = ../test/classes
 OUTPUT_FILE = ../output.txt
 
 default:

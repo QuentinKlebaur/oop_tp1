@@ -4,7 +4,7 @@ SRC_FOLDER = src
 
 HOST = localhost
 PORT = 8080
-COMMAND_FOLDER = ../command.txt
+COMMAND_FILE = ../command.txt
 OUTPUT_FILE = ../output.txt
 
 default:
@@ -16,6 +16,6 @@ clean:
 	rm $(BUILD_FOLDER)/*.class
 
 run: classes
-	cd $(BUILD_FOLDER) && java $(MAIN_FILE) $(HOST) $(PORT) $(COMMAND_FOLDER) $(OUTPUT_FILE)
+	cd $(BUILD_FOLDER) && java $(MAIN_FILE) $(HOST) $(PORT) $(COMMAND_FILE) $(OUTPUT_FILE)
 
 .PHONY: default classes clean run

@@ -4,7 +4,10 @@ import java.io.*;
 import java.text.*;
 import java.util.*;
 
-class ApplicationClient
+/**
+* Classe principale du programme Client
+*/
+public class ApplicationClient
 {
     private Socket _socket;
     private BufferedReader commandesReader;
@@ -15,19 +18,22 @@ class ApplicationClient
     /**
     * écrit les logs
     */
-    public void addLog(String message) {
+    public void addLog(String message, boolean writeFile) {
         String now = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date());
         String log = "[" + now + "] " + message;
 
         System.out.println(log);
+        if (writeFile) {
+            sortieWriter.println(log);
+            sortieWriter.flush();
+        }
     }
 
     /**
     * écrit les logs d'une commande
     */
     public void addLog(Commande command) {
-        addLog("Command sent:");
-        command.dump();
+        addLog("Command sent: " + command.toString(), false);
     }
 
     /**
@@ -70,7 +76,7 @@ class ApplicationClient
         if (!outputFile.isFile())
             throw new  FileNotFoundException('\"' + fichSortie + '\"' + " is not a file");
         commandesReader = new BufferedReader(new FileReader(fichCommandes));
-        sortieWriter = new PrintWriter(new BufferedWriter(new FileWriter(fichSortie)));
+        sortieWriter = new PrintWriter((new FileWriter(fichSortie)));
     }
 
     /**
@@ -81,7 +87,7 @@ class ApplicationClient
     * décrit plus haut, qui seront appelées par traiteCommande(Commande uneCommande)
     */
     public Object traiteCommande(Commande uneCommande) {
-        Object object = new Object();
+        String response = null;
 
         try {
             _outStream.writeObject(uneCommande);
@@ -90,12 +96,12 @@ class ApplicationClient
             e.printStackTrace();
         }
         try {
-            String response = _inStream.readLine();
-            addLog("Response received \"" + response + "\"");
+            response = _inStream.readLine();
+            addLog("Response received \"" + response + "\"", false);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return object;
+        return response;
     }
 
     /**
@@ -114,6 +120,14 @@ class ApplicationClient
             prochaine = saisisCommande(commandesReader);
         }
         sortieWriter.println("Fin des traitements");
+        sortieWriter.flush();
+    }
+
+    /**
+    * Permet de flush la sortie fichier
+    */
+    public void flush() {
+        sortieWriter.flush();
     }
 
     /**
@@ -140,6 +154,7 @@ class ApplicationClient
             client.connect(host, port);
             
             client.scenario();
+            client.flush();
         } catch (NumberFormatException e) {
             e.printStackTrace();
         } catch (IllegalArgumentException e) {

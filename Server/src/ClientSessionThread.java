@@ -1,7 +1,10 @@
 import java.io.*;
 import java.net.*;
 
-class ClientSessionThread extends Thread {
+public class ClientSessionThread extends Thread {
+    /**
+    * Créer une session pour un client en prenant un socket et la classe du serveur
+    */
     public ClientSessionThread(ApplicationServeur server, Socket socket) {
         _server = server;
         _socket = socket;
@@ -10,6 +13,9 @@ class ClientSessionThread extends Thread {
     private ApplicationServeur _server;
     private Socket _socket;
 
+    /**
+    * Lance le Thread et s'occupe d'interagir avec un client
+    */
     public void run() {
         ObjectInputStream inStream = null;
         DataOutputStream outStream = null;
@@ -53,6 +59,9 @@ class ClientSessionThread extends Thread {
                     } catch (IllegalAccessException e) {
                         e.printStackTrace();
                         response = "KO: can't access the class, attribute or method";
+                    } catch (IllegalStateException e) {
+                        e.printStackTrace();
+                        response = "KO: compilation of files failed";
                     }
                     String tmpResponse = _server.popClientResponse();
 

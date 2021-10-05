@@ -1,14 +1,17 @@
 import java.io.*;
 import java.net.*;
-import java.lang.*;
 import java.lang.reflect.*;
 import java.util.*;
+
 import java.text.*;
 
+/**
+* Classe principale du programme Server
+*/
 public class ApplicationServeur
 {
     /**
-    * prend le numéro de port, crée un SocketServer sur le port
+    * Prend le numéro de port, crée un SocketServer sur le port
     */
     public ApplicationServeur (int port) throws IOException {
         _socket = new ServerSocket(port);
@@ -30,21 +33,21 @@ public class ApplicationServeur
     private boolean _running;
 
     /**
-    * Add a response for a ClientSessionThread
+    * Ajoute une réponse pour un ClientSessionThread
     */
     void addClientResponse() {
         _responses.put(Thread.currentThread().getId(), "");
     }
 
     /**
-    * Update a response for a ClientSessionThread
+    * Met à jour une réponse pour le ClientSessionThread
     */
     void updateClientResponse(String message) {
         _responses.put(Thread.currentThread().getId(), message);
     }
 
     /**
-    * Pop a response for a ClientSessionThread
+    * Pop une réponse pour le ClientSessionThread
     */
     String popClientResponse() {
         String response = _responses.get(Thread.currentThread().getId());
@@ -54,13 +57,12 @@ public class ApplicationServeur
     }
 
     /**
-    * Remove a response for a ClientSessionThread
+    * Supprime une réponse ClientSessionThread
     */
     void removeClientResponse() {
-       // _responses.remove(Thread.currentThread().getId());
+        _responses.remove(Thread.currentThread().getId());
     }
 
-    
     /**
     * Permet d'initialiser les fichiers et dossiers avec lesquels le programme va interagir
     */
@@ -75,7 +77,7 @@ public class ApplicationServeur
             throw new FileNotFoundException('\"' + classesFolderPath + '\"' + " is not a folder");
         if (!outputFile.isFile())
             throw new FileNotFoundException('\"' + outputFilePath + '\"' + " is not a file");
-        _logger = new PrintWriter(new BufferedWriter(new FileWriter(outputFilePath)));
+        _logger = new PrintWriter(new FileWriter(outputFilePath));
         addLog("Server is running on the port [" + Integer.toString(_socket.getLocalPort()) + "]");
     }
 
@@ -95,6 +97,8 @@ public class ApplicationServeur
         String log = "[" + now + "] " + message;
 
         System.out.println(log);
+        _logger.println(log);
+        _logger.flush();
     }
 
     /**
@@ -108,8 +112,7 @@ public class ApplicationServeur
     * écrit les logs d'une commande
     */
     public void addLog(Socket socket, Commande command) {
-        addLog(socket, "Command received:");
-        command.dump();
+        addLog(socket, "Command received: " + command.toString());
     }
 
     /**
@@ -137,12 +140,17 @@ public class ApplicationServeur
     public void manageCompilation(String[] args) {
         if (args.length != 2)
             throw new IllegalArgumentException();
+        String command = "";
         
         String[] paths = args[0].split(",");
         String classFolder = args[1];
 
-        for (int i = 0; i < paths.length; ++i)
-            traiterCompilation(paths[i]);
+        for (int i = 0; i < paths.length; ++i) {
+            command += (_inputFolder.getPath() + "/" + paths[i]).replaceAll("//", "/");
+            if (i != paths.length - 1)
+                command += ':';
+        }
+        traiterCompilation(command);
     }
 
     /**
@@ -211,6 +219,9 @@ public class ApplicationServeur
         traiterEcriture(object, attribute, value);
     }
 
+    /**
+    * Transforme des String en d'autres objets basiques Java
+    */
     public Object toObject(String className, String value) {
         if (Boolean.class.getName().equals(className) || className.equals("boolean"))
                 return Boolean.parseBoolean(value);
@@ -231,6 +242,9 @@ public class ApplicationServeur
         throw new IllegalArgumentException();
     }
 
+    /**
+    * Trie une commande de type fonction
+    */
     public void parseFunctionArguments(String[] elements, String[] types, Object[] values) {
         if (elements == null || types == null || values == null ||
             elements.length != values.length || elements.length != types.length)
@@ -257,12 +271,6 @@ public class ApplicationServeur
             }
             types[i] = values[i].getClass().getName();
         }
-        System.out.println("TYPES: " + types.toString());
-        for (int i = 0; i != types.length; ++i)
-            System.out.println(types[i]);
-        System.out.println("VALUES: " + values.toString());
-        for (int i = 0; i != values.length; ++i)
-            System.out.println(values[i]);
     }
 
     /**
@@ -276,18 +284,23 @@ public class ApplicationServeur
         String[] types = null;
         Object[] values = null;
 
+        if (obj == null)
+            throw new IllegalArgumentException();
         if (args.length == 3) {
             String[] elements = args[2].split(",");
 
             types = new String[elements.length];
             values = new Object[elements.length];
             parseFunctionArguments(elements, types, values);
+        } else {
+            types = new String[0];
+            values = new Object[0];
         }
         traiterAppel(obj, functionName, types, values);
     }
 
     /**
-    * prend uneCommande dument formattée, et la traite. Dépendant du type de commande,
+    * Prend uneCommande dument formattée, et la traite. Dépendant du type de commande,
     * elle appelle la méthode spécialisée
     */
     public void traiteCommande(Commande uneCommande) throws ClassNotFoundException, IllegalAccessException {
@@ -450,22 +463,30 @@ public class ApplicationServeur
     */
     public void traiterCompilation(String cheminRelatifFichierSource) {
         ProcessBuilder processBuilder = new ProcessBuilder();
+        String[] paths = cheminRelatifFichierSource.split(":");
+        List<String> command = new LinkedList<String>();
 
-        processBuilder.command("javac", "-d", _classesFolder.getPath(),  cheminRelatifFichierSource);
+        command.add("javac");
+        command.add("-d");
+        command.add(_classesFolder.getPath());
+        for (String path : paths)
+            command.add(path);
+        processBuilder.command(command);
 
         try {
             Process process = processBuilder.start();
-            StringBuilder output = new StringBuilder();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line;
-            
-            while ((line = reader.readLine()) != null) {
-                output.append(line + "\n");
-            }
+
+            process.waitFor();
+            int result = process.exitValue();
+
+            if (result != 0)
+                throw new IllegalStateException();
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
-        addLog("Compilation of file: " + cheminRelatifFichierSource);
+        addLog("Compilation of file(s): " + cheminRelatifFichierSource);
     }
 
     /**
@@ -480,8 +501,21 @@ public class ApplicationServeur
         Method method = getMethod(pointeurObjet.getClass(), nomFonction);
         String result = null;
 
+
         if (method == null)
             throw new IllegalArgumentException();
+
+        Class[] parametersType = method.getParameterTypes();
+        for (int i = 0; i != parametersType.length; ++i) {
+            System.out.println("ARG" + i + " EXPECTED" + "[" + parametersType[i].getName() + "] | GET[" + valeurs[i].getClass().getName() + "]");
+
+            if (parametersType[i].isInstance(valeurs[i])) {
+                System.out.println("It matches");
+
+                valeurs[i] = parametersType[i].cast(valeurs[i]);
+            } else
+                System.out.println("It does not match");
+        }
         try {
             Object objResult = method.invoke(pointeurObjet, valeurs);
 
@@ -491,6 +525,9 @@ public class ApplicationServeur
                 result = "null";
         } catch (InvocationTargetException e) {
             throw new IllegalAccessException();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new IllegalArgumentException();
         }
         updateClientResponse(result);
     }

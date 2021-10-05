@@ -1,7 +1,14 @@
 import java.io.*;
 import java.util.Arrays;
 
-class Commande implements java.io.Serializable {
+/**
+ * Une version serialisable d'une commande
+ */
+public class Commande implements java.io.Serializable {
+
+    /**
+    * Construit la commande à partir d'une String
+    */
     public Commande(String command) {
         _command = command.split("#");
     }
@@ -47,5 +54,18 @@ class Commande implements java.io.Serializable {
         if (_command.length >= 2)
             return Arrays.copyOfRange(_command, 1, _command.length);
         return new String[0];
+    }
+
+    /**
+    * Renvoie la commande sous forme de string
+    */
+    public String toString() {
+        String result = "";
+        for (int i = 0; i != _command.length; ++i) {
+            result += _command[i];
+            if (i != _command.length - 1)
+                result += '#';
+        }
+        return result;
     }
 }
