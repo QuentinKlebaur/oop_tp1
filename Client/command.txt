@@ -1,15 +1,16 @@
 compilation#./src/ca/uqac/registraire/Cours.java,./src/ca/uqac/registraire/Etudiant.java#./classes
+chargement#ca.uqac.registraire.Etudiant
 chargement#ca.uqac.registraire.Cours
+creation#ca.uqac.registraire.Etudiant#mathilde
 creation#ca.uqac.registraire.Cours#8inf853
 ecriture#8inf853#titre#Architecture des applications
 lecture#8inf853#titre
 creation#ca.uqac.registraire.Cours#8inf843
 ecriture#8inf843#titre#Systemes repartis
-chargement#ca.uqac.registraire.Etudiant
-creation#ca.uqac.registraire.Etudiant#mathilde
 ecriture#mathilde#nom#Mathilde Boivin
 creation#ca.uqac.registraire.Etudiant#raymond
 fonction#raymond#setNom#String:Raymond Sauve
+fonction#raymond#getNom#
 fonction#8inf853#getNote#ca.uqac.registraire.Etudiant:ID(mathilde)
 fonction#mathilde#inscrisDansCours#ca.uqac.registraire.Cours:ID(8inf853)
 fonction#8inf853#attributeNote#ca.uqac.registraire.Etudiant:ID(mathilde),float:3.7

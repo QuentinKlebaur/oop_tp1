@@ -444,7 +444,6 @@ public class ApplicationServeur
     public void traiterChargement(String nomQualifie) throws ClassNotFoundException {
         try {
             URL[] urlList = new URL[] {_classesFolder.toURI().toURL()};
-
             ClassLoader classLoader = new URLClassLoader(urlList);
             Class newClass = classLoader.loadClass(nomQualifie);
 
@@ -507,14 +506,13 @@ public class ApplicationServeur
 
         Class[] parametersType = method.getParameterTypes();
         for (int i = 0; i != parametersType.length; ++i) {
-            System.out.println("ARG" + i + " EXPECTED" + "[" + parametersType[i].getName() + "] | GET[" + valeurs[i].getClass().getName() + "]");
+//            System.out.println("ARG" + i + " EXPECTED" + "[" + parametersType[i].getName() + "] | GET[" + valeurs[i].getClass().getName() + "]");
 
             if (parametersType[i].isInstance(valeurs[i])) {
-                System.out.println("It matches");
-
+//                System.out.println("It matches");
                 valeurs[i] = parametersType[i].cast(valeurs[i]);
-            } else
-                System.out.println("It does not match");
+            }// else
+//                System.out.println("It does not match");
         }
         try {
             Object objResult = method.invoke(pointeurObjet, valeurs);
@@ -525,9 +523,6 @@ public class ApplicationServeur
                 result = "null";
         } catch (InvocationTargetException e) {
             throw new IllegalAccessException();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new IllegalArgumentException();
         }
         updateClientResponse(result);
     }
@@ -550,10 +545,9 @@ public class ApplicationServeur
             String inputFolder = args[1];
             String classesFolder = args[2];
             String outputFile = args[3];
+
             server = new ApplicationServeur(port);
-
             server.initialize(inputFolder, classesFolder, outputFile);
-
             Runtime.getRuntime().addShutdownHook(new StopThread(server));
             server.aVosOrdres();
         } catch (NumberFormatException e) {

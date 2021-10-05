@@ -51,23 +51,18 @@ public class ClientSessionThread extends Thread {
                     try {
                         _server.traiteCommande(command);
                     } catch (IllegalArgumentException e) {
-                        e.printStackTrace();
                         response = "KO: wrong arguments";
                     } catch (ClassNotFoundException e) {
-                        e.printStackTrace();
                         response = "KO: could not be loaded";
                     } catch (IllegalAccessException e) {
-                        e.printStackTrace();
                         response = "KO: can't access the class, attribute or method";
                     } catch (IllegalStateException e) {
-                        e.printStackTrace();
                         response = "KO: compilation of files failed";
                     }
                     String tmpResponse = _server.popClientResponse();
 
                     if (!tmpResponse.isEmpty())
                         response = tmpResponse;
-                    
                     try {
                         outStream.writeBytes(response + "\n");
                         outStream.flush();
